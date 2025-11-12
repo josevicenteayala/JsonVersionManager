@@ -4,13 +4,27 @@
 
 The JsonVersionManager REST API provides programmatic access to metadata document management, versioning, and comparison capabilities. All endpoints follow RESTful conventions and return JSON responses.
 
-**Base URL**: `https://api.jsonversionmanager.com/v1` (TBD)
-
-**API Version**: v1 (Current)
-
-**Content Type**: `application/json`
-
+**Implementation**: Spring Boot 3.3 with Java 21  
+**Base URL**: `https://api.jsonversionmanager.com/v1` (TBD)  
+**API Version**: v1 (Current)  
+**Content Type**: `application/json`  
 **Rate Limits**: TBD (likely 1000 requests/hour per user)
+
+### Technology Stack
+
+The API is built using:
+- **Spring Boot 3.3** - REST API framework
+- **Spring Security** - OAuth2/JWT authentication
+- **Spring Data JPA** - Data persistence
+- **Spring Validation** - Request validation
+- **SpringDoc OpenAPI** - Interactive API documentation (Swagger UI)
+- **PostgreSQL 15+** - Primary database with JSONB support
+
+### API Documentation Tools
+
+- **Swagger UI**: Available at `/swagger-ui.html` when the application is running
+- **OpenAPI Specification**: Available at `/v3/api-docs` in JSON format
+- **ReDoc** (Alternative): Available at `/redoc` for a different documentation view
 
 ---
 
@@ -957,6 +971,150 @@ public class JsonVersionManagerClient {
         );
     }
 }
+```
+
+**Using Spring WebClient (Recommended for Spring Boot applications)**:
+```java
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+@Service
+public class JsonVersionManagerClient {
+    private final WebClient webClient;
+    
+    public JsonVersionManagerClient(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder
+            .baseUrl("https://api.jsonversionmanager.com/v1")
+            .defaultHeader("Content-Type", "application/json")
+            .build();
+    }
+    
+    public Mono<DocumentResponse> getDocument(String documentId, String token) {
+        return webClient.get()
+            .uri("/documents/{id}", documentId)
+            .header("Authorization", "Bearer " + token)
+            .retrieve()
+            .bodyToMono(DocumentResponse.class);
+    }
+    
+    public Mono<DocumentResponse> updateDocument(
+            String documentId, 
+            UpdateDocumentRequest request, 
+            String token) {
+        return webClient.put()
+            .uri("/documents/{id}", documentId)
+            .header("Authorization", "Bearer " + token)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(DocumentResponse.class);
+    }
+    
+    public Mono<DiffResponse> compareVersions(
+            String documentId, 
+            int fromVersion, 
+            int toVersion, 
+            String token) {
+        return webClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/documents/{id}/compare")
+                .queryParam("from", fromVersion)
+                .queryParam("to", toVersion)
+                .build(documentId))
+            .header("Authorization", "Bearer " + token)
+            .retrieve()
+            .bodyToMono(DiffResponse.class);
+    }
+}
+```
+
+**Using Spring RestTemplate (Legacy, but still supported)**:
+```java
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+
+@Service
+public class JsonVersionManagerRestClient {
+    private static final String BASE_URL = "https://api.jsonversionmanager.com/v1";
+    private final RestTemplate restTemplate;
+    
+    public JsonVersionManagerRestClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+    
+    public DocumentResponse getDocument(String documentId, String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        
+        ResponseEntity<DocumentResponse> response = restTemplate.exchange(
+            BASE_URL + "/documents/" + documentId,
+            HttpMethod.GET,
+            entity,
+            DocumentResponse.class
+        );
+        
+        return response.getBody();
+    }
+    
+    public DocumentResponse createDocument(
+            String topicId, 
+            CreateDocumentRequest request, 
+            String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        HttpEntity<CreateDocumentRequest> entity = new HttpEntity<>(request, headers);
+        
+        ResponseEntity<DocumentResponse> response = restTemplate.postForEntity(
+            BASE_URL + "/topics/" + topicId + "/documents",
+            entity,
+            DocumentResponse.class
+        );
+        
+        return response.getBody();
+    }
+}
+```
+
+**Data Transfer Objects (DTOs) for Java clients**:
+```java
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
+import java.util.Map;
+
+public record DocumentResponse(
+    @JsonProperty("document_id") String documentId,
+    @JsonProperty("topic_id") String topicId,
+    @JsonProperty("current_version") Integer currentVersion,
+    @JsonProperty("created_at") Instant createdAt,
+    @JsonProperty("created_by") String createdBy,
+    @JsonProperty("updated_at") Instant updatedAt,
+    Map<String, Object> content
+) {}
+
+public record CreateDocumentRequest(
+    Map<String, Object> content,
+    String comment
+) {}
+
+public record UpdateDocumentRequest(
+    Map<String, Object> content,
+    String comment
+) {}
+
+public record DiffResponse(
+    @JsonProperty("from_version") Integer fromVersion,
+    @JsonProperty("to_version") Integer toVersion,
+    @JsonProperty("changes_count") Integer changesCount,
+    Map<String, Object> added,
+    Map<String, Object> removed,
+    Map<String, Object> modified
+) {}
 ```
 
 ---

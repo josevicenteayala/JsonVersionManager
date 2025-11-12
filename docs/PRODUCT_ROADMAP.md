@@ -146,6 +146,59 @@ This roadmap outlines the phased delivery of JsonVersionManager, starting with c
 
 **Priority**: P1 (High)
 
+### Implementation Technology Stack
+
+#### Backend (Java 21 + Spring Boot 3.3)
+**Framework & Core**:
+- Spring Boot 3.3 (full Java 21 support)
+- Spring Web (REST API implementation)
+- Spring Data JPA (data persistence)
+- Spring Security (OAuth2 resource server)
+- Spring Validation (Bean Validation API)
+
+**Database & Persistence**:
+- PostgreSQL 15+ with JSONB support
+- Flyway or Liquibase for database migrations
+- HikariCP connection pooling
+
+**Validation & JSON Processing**:
+- JSON Schema Validator (everit-json-schema or networknt)
+- Jackson for JSON serialization
+- Hibernate Validator for bean validation
+
+**Documentation & Testing**:
+- SpringDoc OpenAPI (Swagger UI generation)
+- JUnit 5 with Mockito for testing
+- TestContainers for integration tests
+- RestAssured for API testing
+
+**Rationale**: 
+- Virtual threads (Project Loom) for high-concurrency without complex async code
+- Strong typing reduces runtime errors
+- Mature ecosystem with excellent JSON/database support
+- Enterprise-grade security and observability built-in
+
+#### Technology Decisions
+
+**Why Java 21?**
+- Virtual threads enable 10,000+ concurrent requests with simple code
+- Pattern matching and records improve code clarity
+- Long-term support (LTS) ensures stability
+- Excellent tooling and IDE support
+
+**Why Spring Boot 3.3?**
+- First version with full Java 21 compatibility
+- Native virtual thread support in web layer
+- Comprehensive starter dependencies reduce configuration
+- Production-ready features (Actuator, Security, Data)
+- Large community and extensive documentation
+
+**Why PostgreSQL with JSONB?**
+- ACID guarantees for version immutability
+- Native JSONB type for efficient JSON storage and querying
+- GIN indexes for fast JSON field searches
+- Strong consistency for audit trail requirements
+
 ### Non-Functional Requirements
 
 #### Performance
@@ -340,20 +393,79 @@ This roadmap outlines the phased delivery of JsonVersionManager, starting with c
 - Smooth scrolling (60 fps)
 - Optimistic UI updates
 
-### Technology Stack (To Be Decided)
+### Implementation Technology Stack
 
-**Framework Options**:
-- React + TypeScript
-- Vue 3 + TypeScript
-- Angular
-- Svelte
+#### Frontend (React 18 + TypeScript)
 
-**Component Libraries**:
-- Material-UI / Ant Design / Chakra UI
-- JSON editor: Monaco Editor / CodeMirror
+**Core Framework**:
+- **React 18+** with TypeScript 5+
+- **Vite** for fast builds and HMR (Hot Module Replacement)
+- **React Router** for navigation
+
+**JSON Editing & Visualization**:
+- **@monaco-editor/react** - Rich code editor (VSCode engine) for advanced JSON editing
+  - Syntax highlighting, autocomplete, validation
+  - Multi-cursor editing, search/replace
+- **jsoneditor-react** - Alternative user-friendly editor with tree/code/preview modes
+- **react-json-schema-form** - Auto-generate forms from JSON schemas
+- **React Diff Viewer** - Side-by-side version comparison with syntax highlighting
 
 **State Management**:
-- Redux / Zustand / Pinia
+- **React Query (TanStack Query)** - Server state, caching, and synchronization
+- **Zustand** - Lightweight client state management (if needed)
+
+**UI Component Library**:
+- **Material-UI (MUI)** or **Ant Design** - Comprehensive component library
+  - Business-friendly controls (date pickers, dropdowns, checkboxes)
+  - Responsive design and accessibility built-in
+  - Theme customization
+
+**Form Handling & Validation**:
+- **React Hook Form** - Performant forms with minimal re-renders
+- **Zod** or **Yup** - Schema validation integrated with forms
+- **ajv** - Client-side JSON Schema validation
+
+**API Integration**:
+- **Axios** or native **Fetch API** with React Query
+- **OpenAPI TypeScript Codegen** - Generate type-safe API clients from OpenAPI spec
+
+**Developer Tools**:
+- **ESLint** + **Prettier** - Code quality and formatting
+- **Vitest** - Fast unit testing
+- **React Testing Library** - Component testing
+- **Cypress** or **Playwright** - E2E testing
+
+**Rationale**:
+- React's component model naturally fits JSON document editing
+- TypeScript prevents common errors with complex JSON structures
+- Monaco Editor provides professional-grade JSON editing experience
+- React Query simplifies server state and caching without boilerplate
+- Material-UI/Ant Design provide business-friendly controls out of the box
+- `react-jsonschema-form` can auto-generate UIs from schemas, reducing development time
+
+#### Why React + TypeScript?
+
+**JSON-Centric Design**:
+- Component props naturally map to JSON structures
+- Rich ecosystem of JSON editor components
+- Libraries like `react-jsonschema-form` auto-generate forms from schemas
+
+**Type Safety**:
+- TypeScript catches errors at compile time
+- Auto-generated types from OpenAPI spec ensure API consistency
+- Strong typing for complex nested JSON structures
+
+**Developer Experience**:
+- Vite provides instant feedback during development
+- Hot Module Replacement preserves application state
+- Extensive tooling and IDE support
+- Large community with solutions to common problems
+
+**User Experience**:
+- Monaco Editor provides VSCode-quality editing in the browser
+- React Query handles caching, reducing API calls
+- Component libraries provide accessible, responsive controls
+- Fast page loads and smooth interactions
 
 ### Success Criteria
 
