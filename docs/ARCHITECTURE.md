@@ -4,6 +4,101 @@
 
 JsonVersionManager follows **Hexagonal Architecture** (Ports & Adapters) to keep the core domain independent from delivery technology. This architectural style ensures that business logic remains testable, maintainable, and adaptable to changing infrastructure requirements.
 
+## Technology Stack
+
+### Backend
+
+**Core Platform**
+- **Java 21** (LTS) - Modern Java with virtual threads, pattern matching, and improved performance
+- **Spring Boot 3.3** - Enterprise-grade framework compatible with Java 21
+- **Spring Web** - RESTful API implementation
+- **Spring Data JPA** - Database abstraction and ORM
+- **Spring Security** - Authentication and authorization
+- **Spring Validation** - Request validation with Bean Validation API
+
+**Build & Dependencies**
+- **Maven 3.9+** or **Gradle 8+** - Dependency management and build automation
+- **Java 21 Features Used**:
+  - Virtual Threads for improved concurrency (Project Loom)
+  - Record Classes for immutable DTOs
+  - Pattern Matching for enhanced readability
+  - Sealed Classes for domain modeling
+
+**Data & Persistence**
+- **PostgreSQL 15+** - Primary database with JSONB support for flexible JSON storage
+- **Flyway** or **Liquibase** - Database migration management
+- **HikariCP** - High-performance JDBC connection pooling (default in Spring Boot)
+
+**Validation & Schema**
+- **JSON Schema Validator** - Java library for JSON Schema validation (e.g., `everit-json-schema` or `networknt/json-schema-validator`)
+- **Hibernate Validator** - Bean validation implementation
+
+**API Documentation**
+- **SpringDoc OpenAPI** (Swagger) - Automated API documentation generation
+- **Spring REST Docs** - Test-driven API documentation
+
+**Testing**
+- **JUnit 5** - Unit and integration testing
+- **Mockito** - Mocking framework
+- **TestContainers** - Integration testing with PostgreSQL containers
+- **RestAssured** - REST API testing
+- **ArchUnit** - Architecture testing to enforce hexagonal structure
+
+**Observability**
+- **Spring Boot Actuator** - Application metrics and health checks
+- **Micrometer** - Metrics instrumentation
+- **SLF4J + Logback** - Logging framework (default in Spring Boot)
+
+### Frontend
+
+**Core Platform**
+- **React 18+** - Modern UI library with hooks and concurrent features
+- **TypeScript 5+** - Type-safe JavaScript for maintainability
+- **Vite** - Fast build tool and development server
+
+**JSON Handling & Editing**
+- **@monaco-editor/react** - Rich JSON editor with syntax highlighting (VSCode-based)
+- **jsoneditor-react** - Alternative: user-friendly JSON editor with tree/code views
+- **json-schema-form** - Generate forms from JSON schemas
+- **ajv** - Fast JSON schema validator for client-side validation
+
+**State Management**
+- **React Query (TanStack Query)** - Server state management and caching
+- **Zustand** or **Redux Toolkit** - Client state management (if needed)
+
+**UI Components**
+- **Material-UI (MUI)** or **Ant Design** - Component library with rich controls
+- **React Hook Form** - Performant form handling
+- **React Diff Viewer** - Side-by-side diff visualization
+
+**API Integration**
+- **Axios** or **Fetch API** - HTTP client
+- **OpenAPI TypeScript Codegen** - Generate TypeScript clients from OpenAPI spec
+
+**Build & Development**
+- **ESLint** - Code linting
+- **Prettier** - Code formatting
+- **Vitest** or **Jest** - Unit testing
+- **React Testing Library** - Component testing
+- **Cypress** or **Playwright** - E2E testing
+
+### Rationale
+
+**Why Java 21 + Spring Boot 3.3?**
+- **Enterprise-ready**: Battle-tested stack with extensive ecosystem
+- **Performance**: Virtual threads enable high concurrency with simple code
+- **Type safety**: Strong typing reduces runtime errors
+- **JSON support**: Excellent libraries for JSON processing and validation
+- **Community**: Large developer community and extensive documentation
+- **Spring Boot 3.3**: First version with full Java 21 support, including compatibility with virtual threads and modern Java features
+
+**Why React + TypeScript for Frontend?**
+- **JSON-first**: React's component model naturally handles JSON data structures
+- **Rich ecosystem**: Excellent JSON editor libraries (Monaco, JSONEditor)
+- **Type safety**: TypeScript prevents common errors when working with complex JSON
+- **Developer experience**: Fast iteration with Vite, great tooling
+- **Schema forms**: Libraries like `react-jsonschema-form` can auto-generate UIs from JSON schemas
+
 ## Architecture Layers
 
 ### Domain Layer (Core)
@@ -91,57 +186,79 @@ Implementations of ports that connect the core to external systems.
 
 #### Inbound Adapters (Driving)
 - **REST Controllers**: HTTP API endpoints
-  - Technology: Spring Boot / Express / ASP.NET / FastAPI (TBD)
-  - Responsibilities: Request mapping, DTO transformation, error handling
+  - **Technology**: Spring Boot 3.3 with Spring Web MVC
+  - **Annotations**: `@RestController`, `@RequestMapping`, `@Valid`
+  - **Features**: Content negotiation, exception handling with `@ControllerAdvice`, HATEOAS support
+  - **Responsibilities**: Request mapping, DTO transformation, error handling, OpenAPI documentation
   
 - **CLI Tools**: Command-line interface for power users
-  - Technology: Click / Cobra / Commander (TBD)
-  - Use cases: Bulk operations, CI/CD integration, admin tasks
+  - **Technology**: Spring Shell or Picocli
+  - **Use cases**: Bulk operations, CI/CD integration, admin tasks
 
 - **GraphQL Gateway** (Future)
-  - Technology: Apollo Server / Hot Chocolate (TBD)
-  - Benefits: Flexible queries, reduced over-fetching
+  - **Technology**: Spring for GraphQL (official Spring integration)
+  - **Benefits**: Flexible queries, reduced over-fetching
 
 - **Background Jobs**: Scheduled tasks and async processing
-  - Technology: Quartz / Celery / Hangfire (TBD)
-  - Use cases: Archive old versions, sync to search index, generate reports
+  - **Technology**: Spring Scheduled (`@Scheduled`), Spring Async (`@Async`), or Quartz Scheduler
+  - **Use cases**: Archive old versions, sync to search index, generate reports
 
 #### Outbound Adapters (Driven)
 
 **Persistence Adapters**
-- **SQL Repository**: PostgreSQL with JSONB columns
+- **SQL Repository**: PostgreSQL 15+ with JSONB columns
+  - **Implementation**: Spring Data JPA with custom repositories
+  - **Entity classes**: JPA entities with `@Entity`, `@Table` annotations
+  - **JSONB handling**: Hibernate custom types or native queries for JSON operations
   - Tables: topics, documents, versions, audit_log
   - Indexes: documentId, topicId, timestamp, state
-  - Benefits: ACID transactions, rich querying on JSONB
+  - Benefits: ACID transactions, rich querying on JSONB, type-safe queries with JPA
 
-- **NoSQL Repository** (Alternative): MongoDB / DynamoDB
+- **Alternative Repository** (Future): MongoDB with Spring Data MongoDB
   - Collections: documents with embedded versions
   - Benefits: Natural JSON storage, horizontal scaling
+  - Implementation: `@Document` entities with MongoRepository
 
 **Schema Registry Adapter**
-- Centralized store for topic schemas
-- Version-controlled schema evolution
-- Implementation: Schema Registry / Consul / Database
+- Centralized store for topic schemas with versioning
+- **Implementation**: Custom Spring service backed by database or external registry
+- **Options**: Schema Registry (Confluent), JSON files in classpath, database table
 
-**Search Index Adapter**
+**Search Index Adapter** (Future)
 - Full-text search across document content
-- Technology: Elasticsearch / OpenSearch / Algolia (TBD)
+- **Technology**: Elasticsearch with Spring Data Elasticsearch
+- **Implementation**: `@Document` annotated entities, ElasticsearchRepository
 - Indexed fields: content, author, tags, timestamps
 
 **Notification Adapter**
 - Email / Slack / Webhook notifications
-- Technology: SendGrid / SMTP / Custom webhooks
+- **Technology**: Spring Mail, WebClient for HTTP webhooks, Spring Integration for complex workflows
+- **Implementation**: Event listeners with `@EventListener` or `@TransactionalEventListener`
 - Events: Version created, published, approval required
+
+**Authentication Adapter**
+- **Technology**: Spring Security with OAuth2/JWT
+- **Integration**: Spring Security OAuth2 Resource Server
+- **Providers**: Auth0, Okta, Azure AD, Keycloak
+- **Implementation**: SecurityFilterChain, JWT decoder, custom UserDetailsService
 
 ### Infrastructure Layer
 
 Supporting services and configuration.
 
-- **Database**: Primary data store (PostgreSQL / MongoDB)
-- **Cache**: Schema and frequently accessed documents (Redis / Memcached)
-- **Message Bus** (Optional): Event streaming (Kafka / RabbitMQ / AWS SNS)
-- **Authentication Provider**: Identity management (Auth0 / Okta / Azure AD)
-- **Observability Stack**: Logging, metrics, tracing (ELK / Prometheus / Datadog)
+- **Application Server**: Embedded Tomcat (default in Spring Boot) or Undertow
+- **Database**: PostgreSQL 15+ (primary data store)
+- **Cache**: Redis for schema and frequently accessed documents (Spring Cache with Redis)
+- **Message Bus** (Optional): Kafka / RabbitMQ / AWS SNS with Spring Kafka or Spring AMQP
+- **Authentication Provider**: OAuth2/OIDC provider (Auth0, Okta, Azure AD, Keycloak)
+- **Observability Stack**: 
+  - Spring Boot Actuator for metrics endpoints
+  - Prometheus for metrics collection
+  - Grafana for visualization
+  - ELK Stack (Elasticsearch, Logback, Kibana) for log aggregation
+  - Zipkin or Jaeger for distributed tracing (Spring Cloud Sleuth)
+- **Containerization**: Docker for packaging, Kubernetes for orchestration
+- **CI/CD**: GitHub Actions, GitLab CI, or Jenkins with Maven/Gradle integration
 
 ## Design Principles Applied
 
@@ -248,6 +365,274 @@ interface DocumentRepository {
 - Support for undo/redo in future
 
 **Benefits**: Consistent audit logging, potential for command replay
+
+## Spring Boot Implementation Examples
+
+### REST Controller Example
+
+```java
+@RestController
+@RequestMapping("/api/v1/documents")
+@RequiredArgsConstructor
+public class DocumentController {
+    
+    private final CreateDocumentUseCase createDocumentUseCase;
+    private final UpdateDocumentUseCase updateDocumentUseCase;
+    
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public DocumentResponse createDocument(
+            @Valid @RequestBody CreateDocumentRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        
+        var command = new CreateDocumentCommand(
+            request.topicId(),
+            request.content(),
+            currentUser.getUsername()
+        );
+        
+        var result = createDocumentUseCase.execute(command);
+        return DocumentResponse.from(result);
+    }
+    
+    @PutMapping("/{documentId}")
+    public DocumentResponse updateDocument(
+            @PathVariable UUID documentId,
+            @Valid @RequestBody UpdateDocumentRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        
+        var command = new UpdateDocumentCommand(
+            documentId,
+            request.content(),
+            currentUser.getUsername(),
+            request.comment()
+        );
+        
+        var result = updateDocumentUseCase.execute(command);
+        return DocumentResponse.from(result);
+    }
+    
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidationException(ValidationException ex) {
+        return new ErrorResponse(ex.getErrors());
+    }
+}
+```
+
+### Repository Implementation with Spring Data JPA
+
+```java
+@Entity
+@Table(name = "versions")
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+public class VersionEntity {
+    
+    @Id
+    @GeneratedValue
+    private UUID versionId;
+    
+    @Column(nullable = false)
+    private UUID documentId;
+    
+    @Column(nullable = false)
+    private Integer versionNumber;
+    
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb", nullable = false)
+    private Map<String, Object> content;
+    
+    @Column(nullable = false)
+    private String author;
+    
+    @Column(nullable = false)
+    private Instant timestamp;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PublishingState state;
+    
+    @Column
+    private String diffSummary;
+}
+
+@Repository
+public interface VersionJpaRepository extends JpaRepository<VersionEntity, UUID> {
+    
+    @Query("SELECT v FROM VersionEntity v WHERE v.documentId = :documentId ORDER BY v.versionNumber DESC")
+    Page<VersionEntity> findByDocumentIdOrderByVersionNumberDesc(
+        @Param("documentId") UUID documentId, 
+        Pageable pageable
+    );
+    
+    Optional<VersionEntity> findByDocumentIdAndVersionNumber(UUID documentId, Integer versionNumber);
+}
+
+@Component
+@RequiredArgsConstructor
+public class DocumentRepositoryImpl implements DocumentRepository {
+    
+    private final VersionJpaRepository jpaRepository;
+    private final VersionMapper versionMapper;
+    
+    @Override
+    public Version saveVersion(Version version) {
+        var entity = versionMapper.toEntity(version);
+        var saved = jpaRepository.save(entity);
+        return versionMapper.toDomain(saved);
+    }
+    
+    @Override
+    public List<Version> findVersions(DocumentId documentId, Page pagination) {
+        var pageable = PageRequest.of(
+            pagination.getNumber(), 
+            pagination.getSize()
+        );
+        return jpaRepository
+            .findByDocumentIdOrderByVersionNumberDesc(documentId.getValue(), pageable)
+            .stream()
+            .map(versionMapper::toDomain)
+            .toList();
+    }
+}
+```
+
+### Use Case with Transaction Management
+
+```java
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class UpdateDocumentUseCase {
+    
+    private final DocumentRepository documentRepository;
+    private final ValidationOrchestrator validationOrchestrator;
+    private final VersioningService versioningService;
+    private final ApplicationEventPublisher eventPublisher;
+    
+    public DocumentResult execute(UpdateDocumentCommand command) {
+        // Load existing document
+        var document = documentRepository.findById(command.documentId())
+            .orElseThrow(() -> new DocumentNotFoundException(command.documentId()));
+        
+        // Validate new content
+        var validationResult = validationOrchestrator.validate(
+            document.getTopicId(), 
+            command.content()
+        );
+        
+        if (!validationResult.isValid()) {
+            throw new ValidationException(validationResult.getErrors());
+        }
+        
+        // Create new version
+        var newVersion = versioningService.createVersion(
+            document,
+            command.content(),
+            command.author(),
+            command.comment()
+        );
+        
+        documentRepository.saveVersion(newVersion);
+        
+        // Publish domain event
+        eventPublisher.publishEvent(
+            new VersionCreatedEvent(newVersion.getVersionId(), command.author())
+        );
+        
+        return new DocumentResult(document.getId(), newVersion.getVersionId());
+    }
+}
+```
+
+### Configuration Classes
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/v1/public/**").permitAll()
+                .requestMatchers("/api/v1/documents/**").hasRole("USER")
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+            )
+            .csrf(csrf -> csrf.disable());
+        
+        return http.build();
+    }
+    
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        var converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(new CustomJwtGrantedAuthoritiesConverter());
+        return converter;
+    }
+}
+
+@Configuration
+@EnableCaching
+public class CacheConfig {
+    
+    @Bean
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        var config = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofMinutes(10))
+            .serializeValuesWith(
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                    new GenericJackson2JsonRedisSerializer()
+                )
+            );
+        
+        return RedisCacheManager.builder(connectionFactory)
+            .cacheDefaults(config)
+            .build();
+    }
+}
+```
+
+### Testing Example with TestContainers
+
+```java
+@SpringBootTest
+@Testcontainers
+class DocumentRepositoryIntegrationTest {
+    
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
+        .withDatabaseName("testdb")
+        .withUsername("test")
+        .withPassword("test");
+    
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+    
+    @Autowired
+    private DocumentRepository documentRepository;
+    
+    @Test
+    void shouldSaveAndRetrieveVersion() {
+        var version = new Version(/* ... */);
+        var saved = documentRepository.saveVersion(version);
+        
+        assertThat(saved.getVersionId()).isNotNull();
+        assertThat(saved.getContent()).isEqualTo(version.getContent());
+    }
+}
+```
 
 ## Data Model
 

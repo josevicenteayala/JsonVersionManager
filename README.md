@@ -173,6 +173,70 @@ curl -X POST https://api.jsonversionmanager.com/v1/topics/loyalty/documents \
 
 See [API_REFERENCE.md](docs/API_REFERENCE.md) for complete API documentation.
 
+## Getting Started
+
+### Prerequisites
+- **Java 21** (OpenJDK or Oracle JDK)
+- **Maven 3.9+** or **Gradle 8+**
+- **PostgreSQL 15+**
+- **Node.js 18+** and **npm/yarn** (for frontend)
+- **Docker** (optional, for containerized development)
+
+### Backend Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/josevicenteayala/JsonVersionManager.git
+cd JsonVersionManager/backend
+
+# Configure database
+cp src/main/resources/application.yml.example src/main/resources/application.yml
+# Edit application.yml with your PostgreSQL credentials
+
+# Build the project
+mvn clean install
+# Or with Gradle: ./gradlew build
+
+# Run the application
+mvn spring-boot:run
+# Or with Gradle: ./gradlew bootRun
+
+# API available at: http://localhost:8080
+# Swagger UI at: http://localhost:8080/swagger-ui.html
+```
+
+### Frontend Setup
+
+```bash
+cd JsonVersionManager/frontend
+
+# Install dependencies
+npm install
+# Or with Yarn: yarn install
+
+# Configure API endpoint
+cp .env.example .env
+# Edit .env with your backend API URL (default: http://localhost:8080)
+
+# Run development server
+npm run dev
+# Or with Yarn: yarn dev
+
+# UI available at: http://localhost:5173
+```
+
+### Using Docker (Coming Soon)
+
+```bash
+# Build and run all services
+docker-compose up -d
+
+# Services will be available at:
+# - Backend API: http://localhost:8080
+# - Frontend UI: http://localhost:3000
+# - PostgreSQL: localhost:5432
+```
+
 ## Architecture Overview
 
 JsonVersionManager follows **Hexagonal Architecture** (Ports & Adapters):
@@ -191,13 +255,42 @@ For details, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Technology Stack
 
-_To be determined during implementation. Candidate technologies:_
+### Backend
+- **Java 21** - Modern LTS version with virtual threads and enhanced performance
+- **Spring Boot 3.3** - Production-ready framework with comprehensive ecosystem
+- **PostgreSQL 15+** - Primary database with JSONB support for flexible JSON storage
+- **Spring Data JPA** - Database abstraction and ORM
+- **Spring Security** - OAuth2/JWT authentication and authorization
+- **JSON Schema Validator** - Schema validation for metadata documents
+- **Maven/Gradle** - Build and dependency management
 
-**Backend**: Java/Spring Boot, .NET/ASP.NET Core, Node.js/Express, Python/FastAPI  
-**Frontend**: React, Vue, Angular  
-**Database**: PostgreSQL (JSONB), MongoDB  
-**Auth**: OAuth2, JWT, Auth0/Okta/Azure AD  
-**Infrastructure**: Docker, Kubernetes, AWS/Azure/GCP
+### Frontend
+- **React 18+** with **TypeScript** - Type-safe, modern UI framework
+- **Vite** - Fast build tool and development server
+- **@monaco-editor/react** - Rich JSON editor (VSCode-based) for advanced editing
+- **React Hook Form** - Performant form handling
+- **React Query (TanStack Query)** - Server state management and caching
+- **Material-UI** or **Ant Design** - Component library for business-friendly UI
+- **React Diff Viewer** - Side-by-side version comparison
+
+### Why These Technologies?
+
+**Backend (Java 21 + Spring Boot 3.3)**:
+- Enterprise-proven stack with extensive ecosystem and community support
+- Virtual threads (Project Loom) enable high concurrency with simple, readable code
+- Strong type safety reduces runtime errors
+- Excellent JSON processing libraries and schema validation support
+- Spring Boot 3.3 provides full Java 21 compatibility
+- Comprehensive security, data access, and integration capabilities
+
+**Frontend (React + TypeScript)**:
+- Natural fit for JSON-centric applications with component-based architecture
+- Rich ecosystem of JSON editor components (Monaco, JSONEditor)
+- TypeScript prevents common errors when handling complex JSON structures
+- Libraries like `react-jsonschema-form` can auto-generate UIs from JSON schemas
+- Fast development iteration with Vite and excellent developer tooling
+
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed technical design and implementation patterns.
 
 ## Development Status
 
